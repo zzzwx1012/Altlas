@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Atlas // Minimal Task System</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+        }
+      }
+    }
+  </script>
+
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    * {
+      border-radius: 0px !important;
+    }
+    input, select, textarea {
+      outline: none !important;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #F9FAFB;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #E5E7EB;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fadeIn {
+      animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</head>
+<body class="bg-[#F9FAFB] text-[#111827] antialiased">
+
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const LOCALES = {
+      en: {
+        brand: "ATLAS // TASK",
+        overview: "01 // Overview",
+        repository: "02 // Repository",
+        aiParser: "03 // AI Parser",
+        netProtocol: "NETWORK PROTOCOL: HTTPS",
+        platform: "PLATFORM: ATLAS.ACTIVE",
+        dashboardTitle: "Performance Dashboard",
+        dashboardSubtitle: "Index System // Metrics",
+        totalTasks: "Total Registered",
+        inProgress: "In Progress",
+        pendingUnit: "Pending Unit",
+        completionRate: "Completion Rate",
+        categoryAllocations: "Category Allocations",
+        priorityStatus: "Priority Status",
+        auditLogs: "Audit & Log Transactions",
+        taskRegistryTitle: "Active Task Registry",
+        taskRegistrySubtitle: "Workspace System // Repository",
+        closeForm: "[- Close Form]",
+        newTask: "[+ New Task Element]",
+        taskTitle: "Task Title *",
+        category: "Category",
+        priority: "Priority",
+        descScope: "Description Scope",
+        cancel: "Cancel",
+        commitUnit: "Commit Unit",
+        all: "All",
+        pending: "Pending",
+        completed: "Completed",
+        parserTitle: "Natural Language Parser",
+        parserSubtitle: "Workspace System // Intelligence",
+        rawParams: "Raw Task Parameters",
+        tokens: "Tokens",
+        analyzeBtn: "Analyze with AI",
+        analyzing: "Analyzing context...",
+        examplesTitle: "Workspace Prompt Examples",
+        extractionProfile: "Extraction Profile",
+        confidence: "Confidence",
+        extractedTitle: "Extracted Title",
+        categoryCode: "Category Code",
+        priorityRank: "Priority Rank",
+        analyzedScope: "Analyzed Context Scope",
+        pushToRegistry: "✓ Push Task to Registry",
+        awaitingPrompt: "Awaiting Extraction Prompt",
+        awaitingPromptDesc: "Enter task details on the left workspace window to activate simulated semantic modeling checks.",
+        emptyTasks: "No matching records configured in current database schema.",
+        placeholderInput: "e.g., Fix the user password hashing memory leak on API servers as high priority before next staging deployment...",
+        placeholderTitle: "Identify short summary...",
+        placeholderDesc: "Define detailed action variables, expectations, and context...",
+        statusLabel: "Status",
+        deleteLabel: "Delete",
+        Task: "Task",
+        Requirement: "Requirement",
+        Issue: "Issue",
+        High: "High",
+        Medium: "Medium",
+        Low: "Low",
+        preset1: "Fix core system payment integration returning 500 server errors on user login authentication checks.",
+        preset2: "We need to implement a data dashboard visualization module to show system CPU performance.",
+        preset3: "Verify clean architecture validation protocols of state configuration inside codebase before audits.",
+        
+        // Settings translations
+        settingsTitle: "API Gateway Settings",
+        settingsSub: "Stored strictly inside local browser storage.",
+        baseUrlLabel: "API Base URL",
+        keyLabel: "API Secret Key",
+        modelLabel: "Model Name",
+        saveBtn: "Apply Config",
+        apiNotSet: "API Gateway not configured. Please open settings below to insert credentials.",
+        apiErrorMsg: "Analysis failed. Please check your API Endpoint, Secret Key, and network logs."
+      },
+      zh: {
+        brand: "ATLAS // 任务系统",
+        overview: "01 // 系统概览",
+        repository: "02 // 任务仓库",
+        aiParser: "03 // 智能解析",
+        netProtocol: "网络协议: HTTPS",
+        platform: "平台状态: ATLAS.ACTIVE",
+        dashboardTitle: "系统效能面板",
+        dashboardSubtitle: "指数系统 // 数据指标",
+        totalTasks: "已注册总数",
+        inProgress: "执行中",
+        pendingUnit: "待处理",
+        completionRate: "完成率",
+        categoryAllocations: "分类占比",
+        priorityStatus: "优先级配置",
+        auditLogs: "系统审计与操作日志",
+        taskRegistryTitle: "活动任务清单",
+        taskRegistrySubtitle: "工作区系统 // 仓库",
+        closeForm: "[- 关闭表单]",
+        newTask: "[+ 新建任务项]",
+        taskTitle: "任务标题 *",
+        category: "任务类型",
+        priority: "优先级",
+        descScope: "描述范围",
+        cancel: "取消",
+        commitUnit: "提交单元",
+        all: "全部",
+        pending: "待处理",
+        completed: "已完成",
+        parserTitle: "自然语言语义解析器",
+        parserSubtitle: "工作区系统 // 智能推理",
+        rawParams: "原始任务参数描述",
+        tokens: "字符数",
+        analyzeBtn: "AI 语义分析",
+        analyzing: "正在分析语义上下文中...",
+        examplesTitle: "工作区提示词示例",
+        extractionProfile: "提取的任务属性",
+        confidence: "置信度",
+        extractedTitle: "提取的任务标题",
+        categoryCode: "判定任务类型",
+        priorityRank: "判定优先级",
+        analyzedScope: "提取的描述范围",
+        pushToRegistry: "✓ 将任务推送到清单",
+        awaitingPrompt: "等待输入语义提示词",
+        awaitingPromptDesc: "在左侧工作窗口中输入任务详细信息，以激活模拟语义建模验证。",
+        emptyTasks: "当前数据库架构中未配置匹配的记录。",
+        placeholderInput: "例如：在下次发布前，将 API 服务器上用户密码哈希算法的内存泄露错误作为高优先级修复...",
+        placeholderTitle: "请确定简短的任务概要...",
+        placeholderDesc: "定义详细的操作变量、预期目标和上下文环境...",
+        statusLabel: "状态",
+        deleteLabel: "删除",
+        Task: "任务",
+        Requirement: "需求",
+        Issue: "缺陷",
+        High: "高",
+        Medium: "中",
+        Low: "低",
+        preset1: "修复核心系统支付集成在用户登录鉴权时返回 500 服务器错误的问题。",
+        preset2: "我们需要实现一个数据仪表盘可视化模块，用以展示系统 CPU 的性能占用情况。",
+        preset3: "在进行审计之前，验证代码库中状态配置文件的清洁架构标准校验规则。",
+
+        // Settings translations
+        settingsTitle: "大模型 API 网关配置",
+        settingsSub: "密钥完全由本地浏览器沙盒存储，绝不经过第三方服务器。",
+        baseUrlLabel: "API 接口端点 (Base URL)",
+        keyLabel: "API 密钥 (Secret Key)",
+        modelLabel: "模型名称 (Model Name)",
+        saveBtn: "应用配置项",
+        apiNotSet: "尚未检测到大模型 API 配置。请先点击左下方进行服务网关配置。",
+        apiErrorMsg: "语义解析失败。请检查您的 API 接口地址、密钥或网络请求状态。"
+      }
+    };
+
+    const INITIAL_TASKS = [
+      {
+        id: 'task-1',
+        title: 'Refactor Session Authorization Middleware',
+        title_zh: '重构会话授权中间件结构',
+        description: 'Consolidate token verification pipelines, update active sessions check in schema, and write initial validation hooks.',
+        description_zh: '整合 Token 验证管道，更新 Schema 中的活动会话检查，并编写初始验证钩子。',
+        category: 'Requirement',
+        priority: 'High',
+        status: 'In Progress',
+        createdAt_en: '2 hours ago',
+        createdAt_zh: '2 小时前'
+      },
+      {
+        id: 'task-2',
+        title: 'Fix viewport overflow error on checkout viewport',
+        title_zh: '修复结账页面移动端视口溢出错误',
+        description: 'Mobile keyboards cause checkout CTA containers to render off-canvas on devices running iOS.',
+        description_zh: '在运行 iOS 的设备上，移动端键盘会导致结账 CTA 按钮渲染超出画布。',
+        category: 'Issue',
+        priority: 'High',
+        status: 'Completed',
+        createdAt_en: '4 hours ago',
+        createdAt_zh: '4 小时前'
+      },
+      {
+        id: 'task-3',
+        title: 'Draft standard API specifications v2.4',
+        title_zh: '起草标准 API 规范 v2.4 核心大纲',
+        description: 'Document endpoints, security payloads, and custom response schemes in formatting document.',
+        description_zh: '在格式化文档中记录端点、安全负载和自定义响应方案。',
+        category: 'Task',
+        priority: 'Medium',
+        status: 'Pending',
+        createdAt_en: '1 day ago',
+        createdAt_zh: '1 天前'
+      }
+    ];
+
+    const INITIAL_ACTIVITIES = {
+      en: [
+        { id: 'act-1', text: 'Task "Fix viewport overflow error..." marked as Completed', time: '1 hour ago' },
+        { id: 'act-2', text: 'Status "Refactor Session Authorization..." moved to In Progress', time: '2 hours ago' },
+        { id: 'act-3', text: 'Registered configuration element "Draft standard API..."', time: '1 day ago' }
+      ],
+      zh: [
+        { id: 'act-1', text: '任务“修复结账页面移动端视口溢出错误”被标记为已完成', time: '1 小时前' },
+        { id: 'act-2', text: '任务“重构会话授权中间件结构”状态变更为进行中', time: '2 小时前' },
+        { id: 'act-3', text: '已创建新的系统任务“起草标准 API 规范 v2.4 核心大纲”', time: '1 天前' }
+      ]
+    };
+
+    function App() {
+      const [lang, setLang] = useState('zh');
+      
+      const [tasks, setTasks] = useState(() => {
+        const saved = localStorage.getItem('atlas_tasks');
+        return saved ? JSON.parse(saved) : INITIAL_TASKS;
+      });
+
+      const [activities, setActivities] = useState(() => {
+        const saved = localStorage.getItem('atlas_activities');
+        return saved ? JSON.parse(saved) : INITIAL_ACTIVITIES.zh;
+      });
+
+      // API Settings State
+      const [apiBaseUrl, setApiBaseUrl] = useState(() => localStorage.getItem('atlas_api_url') || 'https://api.deepseek.com/v1');
+      const [apiKey, setApiKey] = useState(() => localStorage.getItem('atlas_api_key') || '');
+      const [apiModel, setApiModel] = useState(() => localStorage.getItem('atlas_api_model') || 'deepseek-chat');
+      const [showSettings, setShowSettings] = useState(false);
+
+      const [activeTab, setActiveTab] = useState('dashboard');
+      const [filterStatus, setFilterStatus] = useState('All');
+      const [showForm, setShowForm] = useState(false);
+      const [formTitle, setFormTitle] = useState('');
+      const [formDesc, setFormDesc] = useState('');
+      const [formCat, setFormCat] = useState('Task');
+      const [formPri, setFormPri] = useState('Medium');
+
+      const [parserInput, setParserInput] = useState('');
+      const [isParsing, setIsParsing] = useState(false);
+      const [parsedOutput, setParsedOutput] = useState(null);
+      const [parserError, setParserError] = useState('');
+
+      const t = LOCALES[lang];
+
+      useEffect(() => {
+        localStorage.setItem('atlas_tasks', JSON.stringify(tasks));
+      }, [tasks]);
+
+      useEffect(() => {
+        localStorage.setItem('atlas_activities', JSON.stringify(activities));
+      }, [activities]);
+
+      // Save API configuration to local storage
+      const handleSaveSettings = (e) => {
+        e.preventDefault();
+        localStorage.setItem('atlas_api_url', apiBaseUrl);
+        localStorage.setItem('atlas_api_key', apiKey);
+        localStorage.setItem('atlas_api_model', apiModel);
+        setShowSettings(false);
+        logSystemActivity(
+          "API Gateway Settings Updated Successfully.",
+          "大模型 API 网关配置更新成功。"
+        );
+      };
+
+      const logSystemActivity = (actionTextEn, actionTextZh) => {
+        const text = lang === 'zh' ? actionTextZh : actionTextEn;
+        const action = {
+          id: 'act-' + Date.now(),
+          text,
+          time: lang === 'zh' ? '刚刚' : 'Just now'
+        };
+        setActivities(prev => [action, ...prev.slice(0, 4)]);
+      };
+
+      const handleCreateTask = (e) => {
+        e.preventDefault();
+        if (!formTitle.trim()) return;
+
+        const isChinese = lang === 'zh';
+        const newTask = {
+          id: 'task-' + Date.now(),
+          title: isChinese ? '' : formTitle,
+          title_zh: isChinese ? formTitle : '',
+          description: isChinese ? '' : (formDesc || 'No details.'),
+          description_zh: isChinese ? (formDesc || '暂无详细描述信息。') : '',
+          category: formCat,
+          priority: formPri,
+          status: 'Pending',
+          createdAt_en: 'Just now',
+          createdAt_zh: '刚刚'
+        };
+
+        setTasks(prev => [newTask, ...prev]);
+        logSystemActivity(
+          `Created task "${formTitle}"`,
+          `创建了任务单元 "${formTitle}"`
+        );
+        
+        setFormTitle('');
+        setFormDesc('');
+        setFormCat('Task');
+        setFormPri('Medium');
+        setShowForm(false);
+      };
+
+      const handleToggleStatus = (id) => {
+        setTasks(prev => prev.map(task => {
+          if (task.id === id) {
+            let nextStatus = 'Pending';
+            if (task.status === 'Pending') nextStatus = 'In Progress';
+            else if (task.status === 'In Progress') nextStatus = 'Completed';
+            
+            const currentTitle = lang === 'zh' ? (task.title_zh || task.title) : (task.title || task.title_zh);
+            logSystemActivity(
+              `Updated "${currentTitle}" status to ${nextStatus}`,
+              `更新了 "${currentTitle}" 状态为 [${t[nextStatus] || nextStatus}]`
+            );
+            return { ...task, status: nextStatus };
+          }
+          return task;
+        }));
+      };
+
+      const handleDeleteTask = (id) => {
+        const target = tasks.find(task => task.id === id);
+        if (target) {
+          const currentTitle = lang === 'zh' ? (target.title_zh || target.title) : (target.title || target.title_zh);
+          setTasks(prev => prev.filter(task => task.id !== id));
+          logSystemActivity(
+            `Removed task "${currentTitle}"`,
+            `删除了任务单元 "${currentTitle}"`
+          );
+        }
+      };
+
+      // Real LLM API Request Call (OpenAI Protocol Compliant)
+      const handleRunParser = async () => {
+        if (!parserInput.trim()) return;
+        
+        if (!apiKey.trim()) {
+          setParserError(t.apiNotSet);
+          return;
+        }
+
+        setIsParsing(true);
+        setParsedOutput(null);
+        setParserError('');
+
+        const promptTemplate = `
+You are a precise task management analyzer. Your job is to extract structured tasks from natural language inputs.
+Analyze this input description: "${parserInput}"
+
+You must output STRICTLY a JSON object with this exact shape:
+{
+  "title": "A short concise title for the task (max 45 characters)",
+  "description": "A refined, professional description of the task requirements",
+  "category": "Must be strictly one of: 'Task', 'Requirement', or 'Issue'",
+  "priority": "Must be strictly one of: 'High', 'Medium', or 'Low'",
+  "confidence": <An integer from 50 to 100 representing your prediction certainty>
+}
+
+Rules:
+1. Do not output any thinking processes, markdowns, or backticks.
+2. Output ONLY the raw JSON string. Do not wrap in \`\`\`json.
+3. The output must be valid JSON parseable directly.
+`;
+
+        try {
+          const response = await fetch(`${apiBaseUrl}/chat/completions`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+              model: apiModel,
+              messages: [
+                { role: 'user', content: promptTemplate }
+              ],
+              temperature: 0.2
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP Error: ${response.status}`);
+          }
+
+          const responseData = await response.json();
+          let completionText = responseData.choices[0].message.content.trim();
+
+          // Robust cleanup if model ignores constraints and returns markdown block anyway
+          if (completionText.startsWith("```")) {
+            completionText = completionText.replace(/^```json/, "").replace(/^```/, "").replace(/```$/, "").trim();
+          }
+
+          const result = JSON.parse(completionText);
+          
+          setParsedOutput({
+            title: result.title || 'Parsed Task Unit',
+            description: result.description || parserInput,
+            category: ['Task', 'Requirement', 'Issue'].includes(result.category) ? result.category : 'Task',
+            priority: ['High', 'Medium', 'Low'].includes(result.priority) ? result.priority : 'Medium',
+            confidence: result.confidence || 85
+          });
+
+        } catch (error) {
+          console.error("API Fetch Error:", error);
+          setParserError(t.apiErrorMsg);
+        } finally {
+          setIsParsing(false);
+        }
+      };
+
+      const handleConfirmParsedTask = () => {
+        if (!parsedOutput) return;
+
+        const isChinese = lang === 'zh';
+        const committedTask = {
+          id: 'task-' + Date.now(),
+          title: isChinese ? '' : parsedOutput.title,
+          title_zh: isChinese ? parsedOutput.title : '',
+          description: isChinese ? '' : parsedOutput.description,
+          description_zh: isChinese ? parsedOutput.description : '',
+          category: parsedOutput.category,
+          priority: parsedOutput.priority,
+          status: 'Pending',
+          createdAt_en: 'Just now',
+          createdAt_zh: '刚刚'
+        };
+
+        setTasks(prev => [committedTask, ...prev]);
+        logSystemActivity(
+          `Imported AI parsed task "${parsedOutput.title}"`,
+          `从 AI 提取导入了新任务 "${parsedOutput.title}"`
+        );
+        
+        setParserInput('');
+        setParsedOutput(null);
+        setActiveTab('tasks');
+      };
+
+      const totalCount = tasks.length;
+      const inProgressCount = tasks.filter(t => t.status === 'In Progress').length;
+      const pendingCount = tasks.filter(t => t.status === 'Pending').length;
+      const completedCount = tasks.filter(t => t.status === 'Completed').length;
+      const completionRate = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+      const categoryCounts = tasks.reduce((acc, task) => {
+        acc[task.category] = (acc[task.category] || 0) + 1;
+        return acc;
+      }, { Task: 0, Requirement: 0, Issue: 0 });
+
+      const priorityCounts = tasks.reduce((acc, task) => {
+        acc[task.priority] = (acc[task.priority] || 0) + 1;
+        return acc;
+      }, { High: 0, Medium: 0, Low: 0 });
+
+      return (
+        <div class="flex flex-col md:flex-row min-h-screen">
+          
+          {/* Side Navbar */}
+          <aside class="md:w-64 bg-white border-b md:border-b-0 md:border-r border-gray-200 p-6 flex flex-col justify-between md:h-screen md:sticky md:top-0 z-30">
+            <div>
+              <div class="flex items-center justify-between pb-6 border-b border-gray-100">
+                <div class="flex items-center space-x-2">
+                  <div class="w-3 h-3 bg-[#2563EB]"></div>
+                  <span class="font-mono text-[11px] tracking-[0.25em] font-bold text-[#111827]">{t.brand}</span>
+                </div>
+                <button 
+                  onClick={() => setLang(lang === 'en' ? 'zh' : 'en')}
+                  class="text-[9px] font-mono border border-gray-300 px-1.5 py-0.5 hover:bg-gray-50 text-gray-500 hover:text-black transition-colors">
+                  {lang === 'en' ? '中文' : 'EN'}
+                </button>
+              </div>
+
+              <nav class="mt-8 space-y-1">
+                <button 
+                  onClick={() => setActiveTab('dashboard')}
+                  class={`w-full flex items-center justify-between px-3 py-2 text-[10px] font-mono uppercase tracking-wider transition-colors ${activeTab === 'dashboard' ? 'bg-[#2563EB] text-white font-medium' : 'text-gray-500 hover:text-[#111827] hover:bg-gray-50'}`}>
+                  <span>{t.overview}</span>
+                  <span>↗</span>
+                </button>
+                <button 
+                  onClick={() => setActiveTab('tasks')}
+                  class={`w-full flex items-center justify-between px-3 py-2 text-[10px] font-mono uppercase tracking-wider transition-colors ${activeTab === 'tasks' ? 'bg-[#2563EB] text-white font-medium' : 'text-gray-500 hover:text-[#111827] hover:bg-gray-50'}`}>
+                  <span>{t.repository}</span>
+                  <span>{totalCount}</span>
+                </button>
+                <button 
+                  onClick={() => setActiveTab('parser')}
+                  class={`w-full flex items-center justify-between px-3 py-2 text-[10px] font-mono uppercase tracking-wider transition-colors ${activeTab === 'parser' ? 'bg-[#2563EB] text-white font-medium' : 'text-gray-500 hover:text-[#111827] hover:bg-gray-50'}`}>
+                  <span>{t.aiParser}</span>
+                  <span>⚡</span>
+                </button>
+              </nav>
+            </div>
+
+            <div class="pt-6 border-t border-gray-100 space-y-3">
+              {/* Gear settings control trigger */}
+              <button 
+                onClick={() => setShowSettings(true)}
+                class="w-full flex items-center space-x-2 text-gray-500 hover:text-black text-[10px] font-mono uppercase tracking-wider py-1 hover:bg-gray-50 px-2 transition-colors">
+                <span>⚙️</span>
+                <span>{lang === 'zh' ? 'API 接口配置' : 'API Gateway Configuration'}</span>
+              </button>
+
+              <div class="hidden md:block">
+                <div class="text-[9px] font-mono text-gray-400 uppercase tracking-widest">{t.netProtocol}</div>
+                <div class="text-[9px] font-mono text-gray-400 uppercase tracking-widest mt-0.5">{t.platform}</div>
+              </div>
+            </div>
+          </aside>
+
+          {/* Main Workspace Frame */}
+          <main class="flex-1 p-6 md:p-12 max-w-5xl w-full mx-auto">
+            
+            {/* MODULE 1: Dashboard */}
+            {activeTab === 'dashboard' && (
+              <div class="animate-fadeIn">
+                <div class="mb-10">
+                  <div class="text-[9px] font-mono uppercase tracking-[0.3em] text-gray-400 mb-1">{t.dashboardSubtitle}</div>
+                  <h1 class="text-2xl font-bold tracking-tight text-[#111827]">{t.dashboardTitle}</h1>
+                </div>
+
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                  <div class="bg-white border border-gray-200 p-6">
+                    <span class="text-[9px] font-mono uppercase tracking-wider text-gray-400 block mb-3">{t.totalTasks}</span>
+                    <span class="text-4xl font-mono font-light text-[#111827]">{totalCount}</span>
+                  </div>
+                  <div class="bg-white border border-gray-200 p-6">
+                    <span class="text-[9px] font-mono uppercase tracking-wider text-gray-400 block mb-3">{t.inProgress}</span>
+                    <span class="text-4xl font-mono font-light text-[#111827]">{inProgressCount}</span>
+                  </div>
+                  <div class="bg-white border border-gray-200 p-6">
+                    <span class="text-[9px] font-mono uppercase tracking-wider text-gray-400 block mb-3">{t.pendingUnit}</span>
+                    <span class="text-4xl font-mono font-light text-[#111827]">{pendingCount}</span>
+                  </div>
+                  <div class="bg-white border border-gray-200 p-6">
+                    <span class="text-[9px] font-mono uppercase tracking-wider text-gray-400 block mb-3">{t.completionRate}</span>
+                    <span class="text-4xl font-mono font-light text-[#2563EB]">{completionRate}%</span>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                  <div class="lg:col-span-2 bg-white border border-gray-200 p-6">
+                    <h3 class="text-[10px] font-mono uppercase tracking-widest text-[#111827] mb-6 pb-2 border-b border-gray-100">{t.categoryAllocations}</h3>
+                    <div class="space-y-4">
+                      {['Task', 'Requirement', 'Issue'].map(cat => {
+                        const count = categoryCounts[cat] || 0;
+                        const percentage = totalCount > 0 ? Math.round((count / totalCount) * 100) : 0;
+                        return (
+                          <div key={cat} class="space-y-1">
+                            <div class="flex justify-between text-xs">
+                              <span class="text-gray-600 font-medium">{t[cat] || cat}</span>
+                              <span class="font-mono text-gray-400">{count} ({percentage}%)</span>
+                            </div>
+                            <div class="w-full bg-gray-100 h-1">
+                              <div class="bg-[#111827] h-1 transition-all duration-300" style={{ width: `${percentage}%` }}></div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div class="bg-white border border-gray-200 p-6">
+                    <h3 class="text-[10px] font-mono uppercase tracking-widest text-[#111827] mb-6 pb-2 border-b border-gray-100 font-bold">{t.priorityStatus}</h3>
+                    <div class="space-y-4.5">
+                      {['High', 'Medium', 'Low'].map(prio => {
+                        const count = priorityCounts[prio] || 0;
+                        const dotColor = prio === 'High' ? 'bg-red-500' : prio === 'Medium' ? 'bg-amber-400' : 'bg-green-400';
+                        return (
+                          <div key={prio} class="flex items-center justify-between py-1 border-b border-gray-50 last:border-0 last:pb-0">
+                            <div class="flex items-center space-x-2">
+                              <span class={`w-1.5 h-1.5 rounded-full ${dotColor}`}></span>
+                              <span class="text-xs text-gray-600">{t[prio] || prio}</span>
+                            </div>
+                            <span class="text-xs font-mono text-gray-400">{count}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bg-white border border-gray-200 p-6">
+                  <h3 class="text-[10px] font-mono uppercase tracking-widest text-gray-500 mb-4 pb-2 border-b border-gray-100">{t.auditLogs}</h3>
+                  <div class="space-y-3">
+                    {activities.map(act => (
+                      <div key={act.id} class="flex justify-between items-center text-xs font-mono py-1 border-b border-gray-50 last:border-0">
+                        <div class="flex items-center space-x-2 text-gray-600">
+                          <span class="text-[#2563EB]">↳</span>
+                          <span>{act.text}</span>
+                        </div>
+                        <span class="text-[9px] text-gray-400 whitespace-nowrap ml-4">{act.time}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* MODULE 2: Task List */}
+            {activeTab === 'tasks' && (
+              <div class="animate-fadeIn">
+                <div class="mb-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <div class="text-[9px] font-mono uppercase tracking-[0.3em] text-gray-400 mb-1 font-semibold">{t.taskRegistrySubtitle}</div>
+                    <h1 class="text-2xl font-bold tracking-tight text-[#111827]">{t.taskRegistryTitle}</h1>
+                  </div>
+                  <button 
+                    onClick={() => setShowForm(!showForm)}
+                    class="bg-[#2563EB] text-white text-[10px] font-mono uppercase tracking-wider px-4 py-2 hover:bg-blue-700 transition-colors self-start sm:self-auto">
+                    {showForm ? t.closeForm : t.newTask}
+                  </button>
+                </div>
+
+                {showForm && (
+                  <form onSubmit={handleCreateTask} class="bg-white border border-gray-200 p-6 mb-8 animate-fadeIn">
+                    <h3 class="text-[10px] font-mono uppercase tracking-widest text-gray-400 mb-4 pb-2 border-b border-gray-100">{t.newTask}</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                      <div class="md:col-span-2">
+                        <label class="block text-[9px] font-mono uppercase tracking-wider text-gray-500 mb-1">{t.taskTitle}</label>
+                        <input 
+                          type="text" 
+                          required
+                          value={formTitle}
+                          onChange={(e) => setFormTitle(e.target.value)}
+                          placeholder={t.placeholderTitle}
+                          class="w-full text-xs border border-gray-200 px-3 py-2 bg-gray-50 focus:border-[#2563EB] focus:bg-white"
+                        />
+                      </div>
+                      <div class="grid grid-cols-2 gap-2">
+                        <div>
+                          <label class="block text-[9px] font-mono uppercase tracking-wider text-gray-500 mb-1">{t.category}</label>
+                          <select 
+                            value={formCat} 
+                            onChange={(e) => setFormCat(e.target.value)}
+                            class="w-full text-xs border border-gray-200 px-2 py-2 bg-gray-50 focus:border-[#2563EB] focus:bg-white font-mono">
+                            <option value="Task">{t.Task}</option>
+                            <option value="Requirement">{t.Requirement}</option>
+                            <option value="Issue">{t.Issue}</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label class="block text-[9px] font-mono uppercase tracking-wider text-gray-500 mb-1">{t.priority}</label>
+                          <select 
+                            value={formPri} 
+                            onChange={(e) => setFormPri(e.target.value)}
+                            class="w-full text-xs border border-gray-200 px-2 py-2 bg-gray-50 focus:border-[#2563EB] focus:bg-white font-mono">
+                            <option value="High">{t.High}</option>
+                            <option value="Medium">{t.Medium}</option>
+                            <option value="Low">{t.Low}</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="mb-4">
+                      <label class="block text-[9px] font-mono uppercase tracking-wider text-gray-500 mb-1">{t.descScope}</label>
+                      <textarea 
+                        rows="2"
+                        value={formDesc}
+                        onChange={(e) => setFormDesc(e.target.value)}
+                        placeholder={t.placeholderDesc}
+                        class="w-full text-xs border border-gray-200 px-3 py-2 bg-gray-50 focus:border-[#2563EB] focus:bg-white"
+                      />
+                    </div>
+                    <div class="flex justify-end space-x-2">
+                      <button 
+                        type="button" 
+                        onClick={() => setShowForm(false)}
+                        class="text-[9px] font-mono uppercase px-3 py-2 text-gray-400 hover:text-gray-900">
+                        {t.cancel}
+                      </button>
+                      <button 
+                        type="submit" 
+                        class="bg-[#111827] text-white text-[9px] font-mono uppercase px-4 py-2 hover:bg-gray-800 transition-colors">
+                        {t.commitUnit}
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                <div class="flex flex-wrap items-center border-b border-gray-200 mb-6 gap-x-6 gap-y-2">
+                  {['All', 'Pending', 'In Progress', 'Completed'].map(state => (
+                    <button 
+                      key={state}
+                      onClick={() => setFilterStatus(state)}
+                      class={`pb-2 text-[10px] font-mono uppercase tracking-wider transition-all relative ${filterStatus === state ? 'text-[#2563EB] font-bold' : 'text-gray-400 hover:text-[#111827]'}`}>
+                      {state === 'All' ? t.all : state === 'Pending' ? t.pending : state === 'In Progress' ? t.inProgress : t.completed}
+                      {filterStatus === state && (
+                        <span class="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-[#2563EB]"></span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                <div class="space-y-3">
+                  {tasks.filter(t => filterStatus === 'All' || t.status === filterStatus).length === 0 ? (
+                    <div class="bg-white border border-gray-200 p-12 text-center text-xs font-mono text-gray-400">
+                      {t.emptyTasks}
+                    </div>
+                  ) : (
+                    tasks.filter(t => filterStatus === 'All' || t.status === filterStatus).map(task => {
+                      const priDotColor = task.priority === 'High' ? 'bg-red-500' : task.priority === 'Medium' ? 'bg-amber-400' : 'bg-green-400';
+                      
+                      const displayedTitle = lang === 'zh' ? (task.title_zh || task.title) : (task.title || task.title_zh);
+                      const displayedDesc = lang === 'zh' ? (task.description_zh || task.description) : (task.description || task.description_zh);
+                      const displayedDate = lang === 'zh' ? (task.createdAt_zh || task.createdAt_en) : (task.createdAt_en || task.createdAt_zh);
+
+                      return (
+                        <div 
+                          key={task.id} 
+                          class="group bg-white border border-gray-200 p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-gray-400 transition-colors">
+                          
+                          <div class="flex items-start space-x-4 flex-1">
+                            <button 
+                              onClick={() => handleToggleStatus(task.id)}
+                              class={`mt-0.5 w-4.5 h-4.5 border flex items-center justify-center transition-colors flex-shrink-0 ${task.status === 'Completed' ? 'bg-[#2563EB] border-[#2563EB] text-white' : 'border-gray-300 hover:border-gray-900'}`}
+                              title="Toggle status">
+                              {task.status === 'Completed' ? (
+                                <svg class="w-3 h-3 fill-current" viewBox="0 0 20 20">
+                                  <path d="M0 11l2-2 5 5L18 3l2 2L7 18z"/>
+                                </svg>
+                              ) : task.status === 'In Progress' ? (
+                                <span class="w-2 h-2 bg-[#111827]"></span>
+                              ) : null}
+                            </button>
+
+                            <div>
+                              <div class="flex items-center space-x-3 flex-wrap gap-y-1">
+                                <h3 class={`text-sm font-semibold text-[#111827] ${task.status === 'Completed' ? 'line-through text-gray-400' : ''}`}>
+                                  {displayedTitle}
+                                </h3>
+                                
+                                <div class="flex items-center space-x-1.5">
+                                  <span class="text-[8px] font-mono tracking-wider uppercase bg-gray-100 text-gray-600 px-1.5 py-0.5 border border-gray-200">
+                                    {t[task.category] || task.category}
+                                  </span>
+                                  <span class="text-[8px] font-mono tracking-wider uppercase bg-gray-50 text-gray-600 px-1.5 py-0.5 border border-gray-200 flex items-center space-x-1">
+                                    <span class={`w-1.5 h-1.5 rounded-full ${priDotColor}`}></span>
+                                    <span>{t[task.priority] || task.priority}</span>
+                                  </span>
+                                </div>
+                              </div>
+                              <p class="text-xs text-gray-500 mt-1 max-w-2xl leading-relaxed">{displayedDesc}</p>
+                              <span class="block text-[8px] font-mono text-gray-400 mt-2">SYS_STAMP: {displayedDate}</span>
+                            </div>
+                          </div>
+
+                          <div class="flex items-center justify-between md:justify-end space-x-3 pt-3 border-t border-gray-50 md:pt-0 md:border-0">
+                            <button 
+                              onClick={() => handleToggleStatus(task.id)}
+                              class={`text-[9px] font-mono uppercase tracking-wider px-2.5 py-1 border transition-colors ${
+                                task.status === 'Completed' ? 'bg-green-50 text-green-700 border-green-200' :
+                                task.status === 'In Progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                'bg-gray-50 text-gray-500 border-gray-200 hover:text-gray-900'
+                              }`}>
+                              {task.status === 'Pending' ? t.pending : task.status === 'In Progress' ? t.inProgress : t.completed}
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteTask(task.id)}
+                              class="text-gray-400 hover:text-red-600 text-[9px] font-mono uppercase transition-colors px-1">
+                              {t.deleteLabel}
+                            </button>
+                          </div>
+
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* MODULE 3: Real LLM AI Parser */}
+            {activeTab === 'parser' && (
+              <div class="animate-fadeIn">
+                <div class="mb-10">
+                  <div class="text-[9px] font-mono uppercase tracking-[0.3em] text-gray-400 mb-1 font-semibold">{t.parserSubtitle}</div>
+                  <h1 class="text-2xl font-bold tracking-tight text-[#111827]">{t.parserTitle}</h1>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                  <div class="lg:col-span-7 space-y-4">
+                    <div class="bg-white border border-gray-200 p-6">
+                      <h3 class="text-[10px] font-mono uppercase tracking-widest text-[#111827] mb-4 pb-2 border-b border-gray-100">{t.rawParams}</h3>
+                      <textarea 
+                        rows="5"
+                        value={parserInput}
+                        onChange={(e) => setParserInput(e.target.value)}
+                        placeholder={t.placeholderInput}
+                        class="w-full text-xs border border-gray-200 p-3 bg-gray-50 focus:border-[#2563EB] focus:bg-white font-mono placeholder-gray-300 resize-none leading-relaxed"
+                      />
+
+                      {/* Error messaging inside workspace */}
+                      {parserError && (
+                        <div class="mt-3 p-3 bg-red-50 border border-red-200 text-red-600 font-mono text-[10px] leading-relaxed">
+                          ⚠️ {parserError}
+                        </div>
+                      )}
+
+                      <div class="mt-4 flex justify-between items-center">
+                        <span class="text-[9px] font-mono text-gray-400">{t.tokens}: {parserInput.length}</span>
+                        <button 
+                          onClick={handleRunParser}
+                          disabled={isParsing || !parserInput.trim()}
+                          class={`font-mono uppercase tracking-wider text-[10px] px-5 py-2.5 transition-colors ${
+                            !parserInput.trim() ? 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed' :
+                            'bg-[#2563EB] text-white hover:bg-blue-700'
+                          }`}>
+                          {isParsing ? (
+                            <span class="flex items-center space-x-2">
+                              <svg class="animate-spin h-3 w-3 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              <span>{t.analyzing}</span>
+                            </span>
+                          ) : t.analyzeBtn}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="bg-white border border-gray-200 p-5">
+                      <span class="text-[9px] font-mono uppercase tracking-wider text-gray-400 block mb-3">{t.examplesTitle}</span>
+                      <div class="space-y-2">
+                        {[t.preset1, t.preset2, t.preset3].map((promptText, idx) => (
+                          <button 
+                            key={idx}
+                            onClick={() => setParserInput(promptText)}
+                            class="w-full text-left text-xs font-mono text-gray-500 hover:text-[#2563EB] hover:bg-gray-50 p-2.5 border border-dashed border-gray-200 transition-colors flex items-center justify-between">
+                            <span class="truncate pr-4">"{promptText}"</span>
+                            <span class="text-[8px] text-gray-400 uppercase font-bold shrink-0">Load ↵</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="lg:col-span-5">
+                    {parsedOutput ? (
+                      <div class="bg-white border-2 border-[#2563EB] p-6 animate-fadeIn">
+                        <div class="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
+                          <span class="text-[10px] font-mono uppercase tracking-wider text-[#2563EB] font-bold">{t.extractionProfile}</span>
+                          <span class="text-[9px] font-mono text-gray-500 bg-blue-50 px-2 py-0.5 border border-blue-100">
+                            {t.confidence}: {parsedOutput.confidence}%
+                          </span>
+                        </div>
+
+                        <div class="space-y-4">
+                          <div>
+                            <label class="block text-[9px] font-mono uppercase tracking-wider text-gray-400 mb-1">{t.extractedTitle}</label>
+                            <input 
+                              type="text" 
+                              value={parsedOutput.title}
+                              onChange={(e) => setParsedOutput({ ...parsedOutput, title: e.target.value })}
+                              class="w-full text-xs font-semibold border border-gray-200 px-3 py-2 bg-gray-50 focus:border-[#2563EB] focus:bg-white"
+                            />
+                          </div>
+
+                          <div class="grid grid-cols-2 gap-3">
+                            <div>
+                              <label class="block text-[9px] font-mono uppercase tracking-wider text-gray-400 mb-1">{t.categoryCode}</label>
+                              <select 
+                                value={parsedOutput.category}
+                                onChange={(e) => setParsedOutput({ ...parsedOutput, category: e.target.value })}
+                                class="w-full text-xs border border-gray-200 px-2 py-2 bg-gray-50 focus:border-[#2563EB] focus:bg-white font-mono">
+                                <option value="Task">{t.Task}</option>
+                                <option value="Requirement">{t.Requirement}</option>
+                                <option value="Issue">{t.Issue}</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label class="block text-[9px] font-mono uppercase tracking-wider text-gray-400 mb-1">{t.priorityRank}</label>
+                              <select 
+                                value={parsedOutput.priority}
+                                onChange={(e) => setParsedOutput({ ...parsedOutput, priority: e.target.value })}
+                                class="w-full text-xs border border-gray-200 px-2 py-2 bg-gray-50 focus:border-[#2563EB] focus:bg-white font-mono">
+                                <option value="High">{t.High}</option>
+                                <option value="Medium">{t.Medium}</option>
+                                <option value="Low">{t.Low}</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label class="block text-[9px] font-mono uppercase tracking-wider text-gray-400 mb-1">{t.analyzedScope}</label>
+                            <textarea 
+                              rows="3"
+                              value={parsedOutput.description}
+                              onChange={(e) => setParsedOutput({ ...parsedOutput, description: e.target.value })}
+                              class="w-full text-xs border border-gray-200 px-3 py-2 bg-gray-50 focus:border-[#2563EB] focus:bg-white leading-relaxed"
+                            />
+                          </div>
+
+                          <button 
+                            type="button"
+                            onClick={handleConfirmParsedTask}
+                            class="w-full bg-[#2563EB] text-white text-[10px] font-mono uppercase tracking-wider py-3 hover:bg-blue-700 transition-colors mt-4">
+                            {t.pushToRegistry}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div class="h-full min-h-[280px] border border-dashed border-gray-200 flex flex-col justify-center items-center text-center p-6 bg-gray-50">
+                        <svg class="w-6 h-6 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                        </svg>
+                        <span class="text-[9px] font-mono text-gray-400 uppercase tracking-widest font-bold">{t.awaitingPrompt}</span>
+                        <p class="text-[10px] text-gray-400 max-w-xs mt-1.5 leading-relaxed">{t.awaitingPromptDesc}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* API Settings Modal overlay (Stark minimal design) */}
+            {showSettings && (
+              <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div class="bg-white border-2 border-black w-full max-w-md p-6 animate-fadeIn">
+                  <div class="flex justify-between items-start pb-4 border-b border-gray-100 mb-5">
+                    <div>
+                      <h2 class="text-sm font-bold text-[#111827] font-mono uppercase tracking-wide">{t.settingsTitle}</h2>
+                      <p class="text-[10px] text-gray-400 mt-0.5">{t.settingsSub}</p>
+                    </div>
+                    <button 
+                      onClick={() => setShowSettings(false)}
+                      class="text-gray-400 hover:text-black text-sm font-mono p-1">
+                      [X]
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleSaveSettings} class="space-y-4">
+                    <div>
+                      <label class="block text-[9px] font-mono uppercase tracking-wider text-gray-500 mb-1">{t.baseUrlLabel}</label>
+                      <input 
+                        type="url" 
+                        required
+                        value={apiBaseUrl}
+                        onChange={(e) => setApiBaseUrl(e.target.value)}
+                        placeholder="https://api.deepseek.com/v1"
+                        class="w-full text-xs border border-gray-200 px-3 py-2 bg-gray-50 focus:border-[#2563EB] focus:bg-white font-mono"
+                      />
+                    </div>
+
+                    <div>
+                      <label class="block text-[9px] font-mono uppercase tracking-wider text-gray-500 mb-1">{t.keyLabel}</label>
+                      <input 
+                        type="password" 
+                        required
+                        value={apiKey}
+                        onChange={(e) => setApiKey(e.target.value)}
+                        placeholder="sk-........................"
+                        class="w-full text-xs border border-gray-200 px-3 py-2 bg-gray-50 focus:border-[#2563EB] focus:bg-white font-mono"
+                      />
+                    </div>
+
+                    <div>
+                      <label class="block text-[9px] font-mono uppercase tracking-wider text-gray-500 mb-1">{t.modelLabel}</label>
+                      <input 
+                        type="text" 
+                        required
+                        value={apiModel}
+                        onChange={(e) => setApiModel(e.target.value)}
+                        placeholder="deepseek-chat"
+                        class="w-full text-xs border border-gray-200 px-3 py-2 bg-gray-50 focus:border-[#2563EB] focus:bg-white font-mono"
+                      />
+                    </div>
+
+                    {/* Quick selection templates */}
+                    <div class="pt-2 border-t border-gray-100">
+                      <span class="block text-[8px] font-mono text-gray-400 uppercase tracking-widest mb-2">Preset Gateways</span>
+                      <div class="flex gap-2">
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            setApiBaseUrl('https://api.deepseek.com/v1');
+                            setApiModel('deepseek-chat');
+                          }}
+                          class="text-[9px] font-mono border border-gray-200 px-2.5 py-1 hover:bg-gray-50 transition-colors">
+                          DeepSeek
+                        </button>
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            setApiBaseUrl('https://api.openai.com/v1');
+                            setApiModel('gpt-4o-mini');
+                          }}
+                          class="text-[9px] font-mono border border-gray-200 px-2.5 py-1 hover:bg-gray-50 transition-colors">
+                          OpenAI (mini)
+                        </button>
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            setApiBaseUrl('http://localhost:11434/v1');
+                            setApiModel('qwen2.5');
+                          }}
+                          class="text-[9px] font-mono border border-gray-200 px-2.5 py-1 hover:bg-gray-50 transition-colors">
+                          Local Ollama
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="flex justify-end pt-4 border-t border-gray-100 space-x-2">
+                      <button 
+                        type="button" 
+                        onClick={() => setShowSettings(false)}
+                        class="text-[9px] font-mono uppercase px-3 py-2 text-gray-400 hover:text-gray-900">
+                        {t.cancel}
+                      </button>
+                      <button 
+                        type="submit" 
+                        class="bg-[#2563EB] text-white text-[9px] font-mono uppercase px-4 py-2 hover:bg-blue-700 transition-colors">
+                        {t.saveBtn}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
+          </main>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
