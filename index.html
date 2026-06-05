@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Atlas // Minimal Task System</title>
+  <title>Atlas // Core Dashboard</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,28 +28,12 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <style>
-    * {
-      border-radius: 0px !important;
-    }
-    input, select, textarea {
-      outline: none !important;
-    }
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 4px;
-      height: 4px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: #F9FAFB;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #E5E7EB;
-    }
+    * { border-radius: 0px !important; }
+    input, select, textarea { outline: none !important; }
+    .animate-fadeIn { animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(4px); }
       to { opacity: 1; transform: translateY(0); }
-    }
-    .animate-fadeIn {
-      animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
   </style>
 </head>
@@ -58,17 +42,18 @@
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useEffect } = React;
+    const { useState, useEffect, useRef } = React;
 
     const LOCALES = {
       en: {
-        brand: "ATLAS // TASK",
+        brand: "ATLAS // PORTAL",
         overview: "01 // Overview",
         repository: "02 // Repository",
         aiParser: "03 // AI Parser",
-        netProtocol: "NETWORK PROTOCOL: HTTPS",
-        platform: "PLATFORM: ATLAS.ACTIVE",
-        dashboardTitle: "Performance Dashboard",
+        aiCurator: "04 // AI Curator",
+        netProtocol: "PROTOCOL: HTTPS",
+        platform: "PLATFORM: ATLAS.MAIN",
+        dashboardTitle: "System Control Dashboard",
         dashboardSubtitle: "Index System // Metrics",
         totalTasks: "Total Registered",
         inProgress: "In Progress",
@@ -96,7 +81,6 @@
         tokens: "Tokens",
         analyzeBtn: "Analyze with AI",
         analyzing: "Analyzing context...",
-        examplesTitle: "Workspace Prompt Examples",
         extractionProfile: "Extraction Profile",
         confidence: "Confidence",
         extractedTitle: "Extracted Title",
@@ -121,8 +105,6 @@
         preset1: "Fix core system payment integration returning 500 server errors on user login authentication checks.",
         preset2: "We need to implement a data dashboard visualization module to show system CPU performance.",
         preset3: "Verify clean architecture validation protocols of state configuration inside codebase before audits.",
-        
-        // Settings translations
         settingsTitle: "API Gateway Settings",
         settingsSub: "Stored strictly inside local browser storage.",
         baseUrlLabel: "API Base URL",
@@ -130,16 +112,40 @@
         modelLabel: "Model Name",
         saveBtn: "Apply Config",
         apiNotSet: "API Gateway not configured. Please open settings below to insert credentials.",
-        apiErrorMsg: "Analysis failed. Please check your API Endpoint, Secret Key, and network logs."
+        apiErrorMsg: "Analysis failed. Please check your API Endpoint, Secret Key, and network logs.",
+
+        // Curator Language Mapping
+        curatorTitle: "AI Photo Curator & Darkroom",
+        curatorSubtitle: "Workspace System // Multi-modal Aesthetic Vision",
+        uploadArea: "Drag & drop 3-9 images here, or click to browse",
+        uploadTip: "Specially optimized for portrait, lighting exposure, and layout harmony.",
+        selectedPhotos: "Imported Negative Strip",
+        curatedShowcase: "Editorial Curated Showcase",
+        analyzePhotosBtn: "Begin Aesthetic Curation",
+        analyzingPhotos: "Comparing and curating aesthetics...",
+        scoreComposition: "Composition & Frame",
+        scoreLighting: "Lighting Exposure",
+        scoreColor: "Color Harmony",
+        scoreVibe: "Atmospheric Vibe",
+        scorePortrait: "Portrait Expression",
+        editorReview: "Editorial Review / Critique",
+        darkroomTitle: "AI Digital Darkroom Adjustments",
+        originalLabel: "Original Negative",
+        optimizedLabel: "AI Agent Optimised",
+        downloadBtn: "Download Optimized Master (HD)",
+        dashboardCurationTitle: "Visual Curation Feature",
+        noCurationYet: "No aesthetic curations performed yet.",
+        curationIndex: "Selected Best Image"
       },
       zh: {
-        brand: "ATLAS // 任务系统",
+        brand: "ATLAS // 控制中心",
         overview: "01 // 系统概览",
         repository: "02 // 任务仓库",
         aiParser: "03 // 智能解析",
+        aiCurator: "04 // 视觉相册",
         netProtocol: "网络协议: HTTPS",
         platform: "平台状态: ATLAS.ACTIVE",
-        dashboardTitle: "系统效能面板",
+        dashboardTitle: "系统核心控制面板",
         dashboardSubtitle: "指数系统 // 数据指标",
         totalTasks: "已注册总数",
         inProgress: "执行中",
@@ -167,7 +173,6 @@
         tokens: "字符数",
         analyzeBtn: "AI 语义分析",
         analyzing: "正在分析语义上下文中...",
-        examplesTitle: "工作区提示词示例",
         extractionProfile: "提取的任务属性",
         confidence: "置信度",
         extractedTitle: "提取的任务标题",
@@ -192,8 +197,6 @@
         preset1: "修复核心系统支付集成在用户登录鉴权时返回 500 服务器错误的问题。",
         preset2: "我们需要实现一个数据仪表盘可视化模块，用以展示系统 CPU 的性能占用情况。",
         preset3: "在进行审计之前，验证代码库中状态配置文件的清洁架构标准校验规则。",
-
-        // Settings translations
         settingsTitle: "大模型 API 网关配置",
         settingsSub: "密钥完全由本地浏览器沙盒存储，绝不经过第三方服务器。",
         baseUrlLabel: "API 接口端点 (Base URL)",
@@ -201,7 +204,30 @@
         modelLabel: "模型名称 (Model Name)",
         saveBtn: "应用配置项",
         apiNotSet: "尚未检测到大模型 API 配置。请先点击左下方进行服务网关配置。",
-        apiErrorMsg: "语义解析失败。请检查您的 API 接口地址、密钥或网络请求状态。"
+        apiErrorMsg: "语义解析失败。请检查您的 API 接口地址、密钥或网络请求状态。",
+
+        // Curator Language Mapping
+        curatorTitle: "AI 视觉美学相册",
+        curatorSubtitle: "工作区系统 // 多模态视觉智能",
+        uploadArea: "拖拽 3-9 张图像至此，或点击浏览文件",
+        uploadTip: "专为人像摄影、构图、光影及色彩和谐度评估进行优化。",
+        selectedPhotos: "已导入负片胶片库",
+        curatedShowcase: "编辑部视觉策展看板",
+        analyzePhotosBtn: "开启 AI 视觉策展",
+        analyzingPhotos: "正在跨照片多维度比对、调色中...",
+        scoreComposition: "画面构图比例",
+        scoreLighting: "曝光与光影对比",
+        scoreColor: "色彩色调和谐度",
+        scoreVibe: "情绪与氛围表达",
+        scorePortrait: "神态与人像表现力",
+        editorReview: "编辑部策展社论 / 点评",
+        darkroomTitle: "AI 智能暗房调色参数",
+        originalLabel: "原始负片",
+        optimizedLabel: "AI Agent 调色优化版",
+        downloadBtn: "下载 AI 调色优化原图 (HD)",
+        dashboardCurationTitle: "美学策展视点",
+        noCurationYet: "暂无视觉相册策展记录。",
+        curationIndex: "最佳当选影像"
       }
     };
 
@@ -229,31 +255,17 @@
         status: 'Completed',
         createdAt_en: '4 hours ago',
         createdAt_zh: '4 小时前'
-      },
-      {
-        id: 'task-3',
-        title: 'Draft standard API specifications v2.4',
-        title_zh: '起草标准 API 规范 v2.4 核心大纲',
-        description: 'Document endpoints, security payloads, and custom response schemes in formatting document.',
-        description_zh: '在格式化文档中记录端点、安全负载和自定义响应方案。',
-        category: 'Task',
-        priority: 'Medium',
-        status: 'Pending',
-        createdAt_en: '1 day ago',
-        createdAt_zh: '1 天前'
       }
     ];
 
     const INITIAL_ACTIVITIES = {
       en: [
         { id: 'act-1', text: 'Task "Fix viewport overflow error..." marked as Completed', time: '1 hour ago' },
-        { id: 'act-2', text: 'Status "Refactor Session Authorization..." moved to In Progress', time: '2 hours ago' },
-        { id: 'act-3', text: 'Registered configuration element "Draft standard API..."', time: '1 day ago' }
+        { id: 'act-2', text: 'Status "Refactor Session Authorization..." moved to In Progress', time: '2 hours ago' }
       ],
       zh: [
         { id: 'act-1', text: '任务“修复结账页面移动端视口溢出错误”被标记为已完成', time: '1 小时前' },
-        { id: 'act-2', text: '任务“重构会话授权中间件结构”状态变更为进行中', time: '2 小时前' },
-        { id: 'act-3', text: '已创建新的系统任务“起草标准 API 规范 v2.4 核心大纲”', time: '1 天前' }
+        { id: 'act-2', text: '任务“重构会话授权中间件结构”状态变更为进行中', time: '2 小时前' }
       ]
     };
 
@@ -271,9 +283,9 @@
       });
 
       // API Settings State
-      const [apiBaseUrl, setApiBaseUrl] = useState(() => localStorage.getItem('atlas_api_url') || 'https://api.deepseek.com/v1');
+      const [apiBaseUrl, setApiBaseUrl] = useState(() => localStorage.getItem('atlas_api_url') || 'https://openrouter.ai/api/v1');
       const [apiKey, setApiKey] = useState(() => localStorage.getItem('atlas_api_key') || '');
-      const [apiModel, setApiModel] = useState(() => localStorage.getItem('atlas_api_model') || 'deepseek-chat');
+      const [apiModel, setApiModel] = useState(() => localStorage.getItem('atlas_api_model') || 'openrouter/free');
       const [showSettings, setShowSettings] = useState(false);
 
       const [activeTab, setActiveTab] = useState('dashboard');
@@ -289,6 +301,17 @@
       const [parsedOutput, setParsedOutput] = useState(null);
       const [parserError, setParserError] = useState('');
 
+      // Photo Curator State
+      const [uploadedImages, setUploadedImages] = useState([]);
+      const [isAnalyzingPhotos, setIsAnalyzingPhotos] = useState(false);
+      const [curationResult, setCurationResult] = useState(() => {
+        const saved = localStorage.getItem('atlas_curation');
+        return saved ? JSON.parse(saved) : null;
+      });
+      const [photoError, setPhotoError] = useState('');
+      const [isOptimized, setIsOptimized] = useState(false);
+      const fileInputRef = useRef(null);
+
       const t = LOCALES[lang];
 
       useEffect(() => {
@@ -299,7 +322,14 @@
         localStorage.setItem('atlas_activities', JSON.stringify(activities));
       }, [activities]);
 
-      // Save API configuration to local storage
+      useEffect(() => {
+        if (curationResult) {
+          localStorage.setItem('atlas_curation', JSON.stringify(curationResult));
+        } else {
+          localStorage.removeItem('atlas_curation');
+        }
+      }, [curationResult]);
+
       const handleSaveSettings = (e) => {
         e.preventDefault();
         localStorage.setItem('atlas_api_url', apiBaseUrl);
@@ -383,10 +413,9 @@
         }
       };
 
-      // Real LLM API Request Call (OpenAI Protocol Compliant)
+      // AI Text Parser Call
       const handleRunParser = async () => {
         if (!parserInput.trim()) return;
-        
         if (!apiKey.trim()) {
           setParserError(t.apiNotSet);
           return;
@@ -409,10 +438,7 @@ You must output STRICTLY a JSON object with this exact shape:
   "confidence": <An integer from 50 to 100 representing your prediction certainty>
 }
 
-Rules:
-1. Do not output any thinking processes, markdowns, or backticks.
-2. Output ONLY the raw JSON string. Do not wrap in \`\`\`json.
-3. The output must be valid JSON parseable directly.
+Rules: Output ONLY raw JSON string. Do not wrap in markdown \`\`\`json.
 `;
 
         try {
@@ -438,7 +464,6 @@ Rules:
           const responseData = await response.json();
           let completionText = responseData.choices[0].message.content.trim();
 
-          // Robust cleanup if model ignores constraints and returns markdown block anyway
           if (completionText.startsWith("```")) {
             completionText = completionText.replace(/^```json/, "").replace(/^```/, "").replace(/```$/, "").trim();
           }
@@ -454,7 +479,7 @@ Rules:
           });
 
         } catch (error) {
-          console.error("API Fetch Error:", error);
+          console.error(error);
           setParserError(t.apiErrorMsg);
         } finally {
           setIsParsing(false);
@@ -489,6 +514,173 @@ Rules:
         setActiveTab('tasks');
       };
 
+      // AI PHOTO CURATOR - Base64 Conversion & Multi-modal request
+      const handlePhotoUpload = (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length < 1) return;
+
+        setPhotoError('');
+        const readers = files.map(file => {
+          return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              resolve({
+                name: file.name,
+                url: reader.result, // base64 encoding DataURI
+                base64: reader.result
+              });
+            };
+            reader.readAsDataURL(file);
+          });
+        });
+
+        Promise.all(readers).then(results => {
+          setUploadedImages(prev => [...prev, ...results].slice(0, 9)); // Limits maximum file strip to 9
+        });
+      };
+
+      const handleRunCuration = async () => {
+        if (uploadedImages.length < 2) {
+          setPhotoError(lang === 'zh' ? '请至少上传两张照片以开启 AI 策展比对。' : 'Please upload at least 2 photos to compare and curate.');
+          return;
+        }
+        if (!apiKey.trim()) {
+          setPhotoError(t.apiNotSet);
+          return;
+        }
+
+        setIsAnalyzingPhotos(true);
+        setPhotoError('');
+        setCurationResult(null);
+
+        // Standard OpenAI Multi-modal Request structure compliant with OpenRouter
+        const imageContentBlock = uploadedImages.map((img) => ({
+          type: "image_url",
+          image_url: { url: img.base64 }
+        }));
+
+        const textInstruction = {
+          type: "text",
+          text: `You are an elite photography curator and professional darkroom retoucher.
+Analyze these ${uploadedImages.length} uploaded photos. Compare them carefully, focusing heavily on portrait aesthetics (expression, posing, lighting, composition) if there are people.
+
+Pick the single best photo from the batch (identify it by its 0-based order index in the input array).
+Evaluate this chosen best photo across 5 dimensions on a scale of 0 to 100:
+1. Composition (framing)
+2. Lighting (exposure, shadows)
+3. Color (tonal harmony)
+4. Vibe (atmospheric emotion)
+5. Portrait (facial expression, pose, capture of emotion)
+
+Then, configure digital "Darkroom" CSS filter settings to optimize this selected photo (make subtle, elegant adjustments like slightly raising contrast, adding subtle warmth, grayscale, or saturation adjustments).
+
+You MUST respond strictly with a raw JSON string of this exact shape:
+{
+  "selectedIndex": <0-based index of the chosen best image, must be integer between 0 and ${uploadedImages.length - 1}>,
+  "title": "A short, elegant magazine cover title for this image",
+  "review": "A detailed editor-in-chief critique (in ${lang === 'zh' ? 'Chinese' : 'English'}) explaining exactly why this image is the masterpiece of the batch.",
+  "scores": {
+    "composition": <integer 0-100>,
+    "lighting": <integer 0-100>,
+    "color": <integer 0-100>,
+    "vibe": <integer 0-100>,
+    "portrait": <integer 0-100>
+  },
+  "darkroom": {
+    "brightness": <float value between 0.7 and 1.3, default 1.0>,
+    "contrast": <float value between 0.7 and 1.3, default 1.0>,
+    "saturate": <float value between 0.7 and 1.3, default 1.0>,
+    "sepia": <float value between 0.0 and 0.5, default 0.0>,
+    "grayscale": <float value between 0.0 and 1.0, default 0.0>
+  }
+}
+
+Do not write any backticks, explanation, or markdown wrappers. Only output valid JSON.`
+        };
+
+        try {
+          const response = await fetch(`${apiBaseUrl}/chat/completions`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+              model: apiModel,
+              messages: [
+                {
+                  role: "user",
+                  content: [textInstruction, ...imageContentBlock]
+                }
+              ],
+              temperature: 0.3
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP Error: ${response.status}`);
+          }
+
+          const responseData = await response.json();
+          let completionText = responseData.choices[0].message.content.trim();
+
+          if (completionText.startsWith("```")) {
+            completionText = completionText.replace(/^```json/, "").replace(/^```/, "").replace(/```$/, "").trim();
+          }
+
+          const result = JSON.parse(completionText);
+          
+          // Save standard details
+          result.localBlobUrl = uploadedImages[result.selectedIndex].url;
+          result.base64 = uploadedImages[result.selectedIndex].base64;
+          result.originalFilename = uploadedImages[result.selectedIndex].name;
+
+          setCurationResult(result);
+          setIsOptimized(true);
+
+          logSystemActivity(
+            `Aesthetic curation completed for image "${result.title}".`,
+            `视觉相册策展成功，甄选出封面影像 "${result.title}"。`
+          );
+
+        } catch (error) {
+          console.error(error);
+          setPhotoError(lang === 'zh' ? 'AI 视觉分析失败。请确保您配置的是支持多模态（Vision）的大模型（例如 google/gemini-2.5-flash 或 openrouter/free）。' : 'Vision analysis failed. Please verify you configured a model that supports multi-modal images.');
+        } finally {
+          setIsAnalyzingPhotos(false);
+        }
+      };
+
+      const handleDownloadOptimized = () => {
+        if (!curationResult) return;
+        const img = new Image();
+        img.src = curationResult.base64;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext('2d');
+          
+          if (ctx) {
+            const d = curationResult.darkroom;
+            ctx.filter = `brightness(${d.brightness || 1}) contrast(${d.contrast || 1}) saturate(${d.saturate || 1}) sepia(${d.sepia || 0}) grayscale(${d.grayscale || 0})`;
+            ctx.drawImage(img, 0, 0);
+
+            const link = document.createElement('a');
+            link.download = `optimized_${curationResult.originalFilename || 'curated_photo.jpg'}`;
+            link.href = canvas.toDataURL('image/jpeg', 0.95);
+            link.click();
+          }
+        };
+      };
+
+      const getFilterStyle = () => {
+        if (!isOptimized || !curationResult?.darkroom) return 'none';
+        const d = curationResult.darkroom;
+        return `brightness(${d.brightness ?? 1}) contrast(${d.contrast ?? 1}) saturate(${d.saturate ?? 1}) sepia(${d.sepia ?? 0}) grayscale(${d.grayscale ?? 0})`;
+      };
+
+      // Metrics
       const totalCount = tasks.length;
       const inProgressCount = tasks.filter(t => t.status === 'In Progress').length;
       const pendingCount = tasks.filter(t => t.status === 'Pending').length;
@@ -508,7 +700,7 @@ Rules:
       return (
         <div class="flex flex-col md:flex-row min-h-screen">
           
-          {/* Side Navbar */}
+          {/* Side Panel Navigation */}
           <aside class="md:w-64 bg-white border-b md:border-b-0 md:border-r border-gray-200 p-6 flex flex-col justify-between md:h-screen md:sticky md:top-0 z-30">
             <div>
               <div class="flex items-center justify-between pb-6 border-b border-gray-100">
@@ -542,11 +734,16 @@ Rules:
                   <span>{t.aiParser}</span>
                   <span>⚡</span>
                 </button>
+                <button 
+                  onClick={() => setActiveTab('curator')}
+                  class={`w-full flex items-center justify-between px-3 py-2 text-[10px] font-mono uppercase tracking-wider transition-colors ${activeTab === 'curator' ? 'bg-[#2563EB] text-white font-medium' : 'text-gray-500 hover:text-[#111827] hover:bg-gray-50'}`}>
+                  <span>{t.aiCurator}</span>
+                  <span>🎨</span>
+                </button>
               </nav>
             </div>
 
             <div class="pt-6 border-t border-gray-100 space-y-3">
-              {/* Gear settings control trigger */}
               <button 
                 onClick={() => setShowSettings(true)}
                 class="w-full flex items-center space-x-2 text-gray-500 hover:text-black text-[10px] font-mono uppercase tracking-wider py-1 hover:bg-gray-50 px-2 transition-colors">
@@ -561,10 +758,10 @@ Rules:
             </div>
           </aside>
 
-          {/* Main Workspace Frame */}
+          {/* Main Space Panel */}
           <main class="flex-1 p-6 md:p-12 max-w-5xl w-full mx-auto">
             
-            {/* MODULE 1: Dashboard */}
+            {/* MODULE 1: Consolidated Control Center Dashboard */}
             {activeTab === 'dashboard' && (
               <div class="animate-fadeIn">
                 <div class="mb-10">
@@ -572,6 +769,7 @@ Rules:
                   <h1 class="text-2xl font-bold tracking-tight text-[#111827]">{t.dashboardTitle}</h1>
                 </div>
 
+                {/* Performance indicators */}
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                   <div class="bg-white border border-gray-200 p-6">
                     <span class="text-[9px] font-mono uppercase tracking-wider text-gray-400 block mb-3">{t.totalTasks}</span>
@@ -592,65 +790,95 @@ Rules:
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-                  <div class="lg:col-span-2 bg-white border border-gray-200 p-6">
-                    <h3 class="text-[10px] font-mono uppercase tracking-widest text-[#111827] mb-6 pb-2 border-b border-gray-100">{t.categoryAllocations}</h3>
-                    <div class="space-y-4">
-                      {['Task', 'Requirement', 'Issue'].map(cat => {
-                        const count = categoryCounts[cat] || 0;
-                        const percentage = totalCount > 0 ? Math.round((count / totalCount) * 100) : 0;
-                        return (
-                          <div key={cat} class="space-y-1">
-                            <div class="flex justify-between text-xs">
-                              <span class="text-gray-600 font-medium">{t[cat] || cat}</span>
-                              <span class="font-mono text-gray-400">{count} ({percentage}%)</span>
+                  <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-white border border-gray-200 p-6">
+                      <h3 class="text-[10px] font-mono uppercase tracking-widest text-[#111827] mb-6 pb-2 border-b border-gray-100">{t.categoryAllocations}</h3>
+                      <div class="space-y-4">
+                        {['Task', 'Requirement', 'Issue'].map(cat => {
+                          const count = categoryCounts[cat] || 0;
+                          const percentage = totalCount > 0 ? Math.round((count / totalCount) * 100) : 0;
+                          return (
+                            <div key={cat} class="space-y-1">
+                              <div class="flex justify-between text-xs">
+                                <span class="text-gray-600 font-medium">{t[cat] || cat}</span>
+                                <span class="font-mono text-gray-400">{count} ({percentage}%)</span>
+                              </div>
+                              <div class="w-full bg-gray-100 h-1">
+                                <div class="bg-[#111827] h-1 transition-all duration-300" style={{ width: `${percentage}%` }}></div>
+                              </div>
                             </div>
-                            <div class="w-full bg-gray-100 h-1">
-                              <div class="bg-[#111827] h-1 transition-all duration-300" style={{ width: `${percentage}%` }}></div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div class="bg-white border border-gray-200 p-6">
-                    <h3 class="text-[10px] font-mono uppercase tracking-widest text-[#111827] mb-6 pb-2 border-b border-gray-100 font-bold">{t.priorityStatus}</h3>
-                    <div class="space-y-4.5">
-                      {['High', 'Medium', 'Low'].map(prio => {
-                        const count = priorityCounts[prio] || 0;
-                        const dotColor = prio === 'High' ? 'bg-red-500' : prio === 'Medium' ? 'bg-amber-400' : 'bg-green-400';
-                        return (
-                          <div key={prio} class="flex items-center justify-between py-1 border-b border-gray-50 last:border-0 last:pb-0">
-                            <div class="flex items-center space-x-2">
-                              <span class={`w-1.5 h-1.5 rounded-full ${dotColor}`}></span>
-                              <span class="text-xs text-gray-600">{t[prio] || prio}</span>
-                            </div>
-                            <span class="text-xs font-mono text-gray-400">{count}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                <div class="bg-white border border-gray-200 p-6">
-                  <h3 class="text-[10px] font-mono uppercase tracking-widest text-gray-500 mb-4 pb-2 border-b border-gray-100">{t.auditLogs}</h3>
-                  <div class="space-y-3">
-                    {activities.map(act => (
-                      <div key={act.id} class="flex justify-between items-center text-xs font-mono py-1 border-b border-gray-50 last:border-0">
-                        <div class="flex items-center space-x-2 text-gray-600">
-                          <span class="text-[#2563EB]">↳</span>
-                          <span>{act.text}</span>
-                        </div>
-                        <span class="text-[9px] text-gray-400 whitespace-nowrap ml-4">{act.time}</span>
+                          );
+                        })}
                       </div>
-                    ))}
+                    </div>
+
+                    <div class="bg-white border border-gray-200 p-6">
+                      <h3 class="text-[10px] font-mono uppercase tracking-widest text-gray-500 mb-4 pb-2 border-b border-gray-100">{t.auditLogs}</h3>
+                      <div class="space-y-3">
+                        {activities.map(act => (
+                          <div key={act.id} class="flex justify-between items-center text-xs font-mono py-1 border-b border-gray-50 last:border-0">
+                            <div class="flex items-center space-x-2 text-gray-600">
+                              <span class="text-[#2563EB]">↳</span>
+                              <span>{act.text}</span>
+                            </div>
+                            <span class="text-[9px] text-gray-400 whitespace-nowrap ml-4">{act.time}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="space-y-6">
+                    <div class="bg-white border border-gray-200 p-6">
+                      <h3 class="text-[10px] font-mono uppercase tracking-widest text-[#111827] mb-6 pb-2 border-b border-gray-100 font-bold">{t.priorityStatus}</h3>
+                      <div class="space-y-4.5">
+                        {['High', 'Medium', 'Low'].map(prio => {
+                          const count = priorityCounts[prio] || 0;
+                          const dotColor = prio === 'High' ? 'bg-red-500' : prio === 'Medium' ? 'bg-amber-400' : 'bg-green-400';
+                          return (
+                            <div key={prio} class="flex items-center justify-between py-1 border-b border-gray-50 last:border-0 last:pb-0">
+                              <div class="flex items-center space-x-2">
+                                <span class={`w-1.5 h-1.5 rounded-full ${dotColor}`}></span>
+                                <span class="text-xs text-gray-600">{t[prio] || prio}</span>
+                              </div>
+                              <span class="text-xs font-mono text-gray-400">{count}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Integrated Photo Curation Panel */}
+                    <div class="bg-white border border-gray-200 p-6">
+                      <h3 class="text-[10px] font-mono uppercase tracking-widest text-[#111827] mb-4 pb-2 border-b border-gray-100">{t.dashboardCurationTitle}</h3>
+                      {curationResult ? (
+                        <div class="space-y-3">
+                          <div class="relative overflow-hidden aspect-[4/3] bg-gray-50 border border-gray-200">
+                            <img 
+                              src={curationResult.localBlobUrl || curationResult.base64} 
+                              alt="Curation Cover"
+                              style={{ filter: `brightness(${curationResult.darkroom?.brightness || 1}) contrast(${curationResult.darkroom?.contrast || 1}) saturate(${curationResult.darkroom?.saturate || 1}) sepia(${curationResult.darkroom?.sepia || 0}) grayscale(${curationResult.darkroom?.grayscale || 0})` }}
+                              class="w-full h-full object-cover"
+                            />
+                            <div class="absolute bottom-2 left-2 bg-black text-white font-mono text-[8px] px-1.5 py-0.5 tracking-wider uppercase">
+                              {t.curationIndex} #{curationResult.selectedIndex + 1}
+                            </div>
+                          </div>
+                          <h4 class="text-xs font-bold font-mono tracking-tight text-[#111827] line-clamp-1">{curationResult.title}</h4>
+                          <p class="text-[10px] text-gray-500 line-clamp-2 leading-relaxed">{curationResult.review}</p>
+                        </div>
+                      ) : (
+                        <div class="p-6 text-center text-xs font-mono text-gray-400 border border-dashed border-gray-100">
+                          {t.noCurationYet}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* MODULE 2: Task List */}
+            {/* MODULE 2: Tasks Registry List */}
             {activeTab === 'tasks' && (
               <div class="animate-fadeIn">
                 <div class="mb-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -823,7 +1051,7 @@ Rules:
               </div>
             )}
 
-            {/* MODULE 3: Real LLM AI Parser */}
+            {/* MODULE 3: Natural Language Semantic Parser */}
             {activeTab === 'parser' && (
               <div class="animate-fadeIn">
                 <div class="mb-10">
@@ -843,7 +1071,6 @@ Rules:
                         class="w-full text-xs border border-gray-200 p-3 bg-gray-50 focus:border-[#2563EB] focus:bg-white font-mono placeholder-gray-300 resize-none leading-relaxed"
                       />
 
-                      {/* Error messaging inside workspace */}
                       {parserError && (
                         <div class="mt-3 p-3 bg-red-50 border border-red-200 text-red-600 font-mono text-[10px] leading-relaxed">
                           ⚠️ {parserError}
@@ -966,7 +1193,193 @@ Rules:
               </div>
             )}
 
-            {/* API Settings Modal overlay (Stark minimal design) */}
+            {/* MODULE 4: AI Photo Curator */}
+            {activeTab === 'curator' && (
+              <div class="animate-fadeIn">
+                <div class="mb-10">
+                  <div class="text-[9px] font-mono uppercase tracking-[0.3em] text-gray-400 mb-1 font-semibold">{t.curatorSubtitle}</div>
+                  <h1 class="text-2xl font-bold tracking-tight text-[#111827]">{t.curatorTitle}</h1>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                  {/* Left Column: Negative Strip upload & Image strip */}
+                  <div class="lg:col-span-7 space-y-4">
+                    
+                    {/* Drag and Drop Zone */}
+                    <div 
+                      onClick={() => fileInputRef.current.click()}
+                      class="border-2 border-dashed border-gray-200 bg-white p-8 text-center cursor-pointer hover:border-[#2563EB] transition-colors flex flex-col items-center">
+                      <svg class="w-8 h-8 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span class="text-xs font-mono text-[#111827] uppercase tracking-wider">{t.uploadArea}</span>
+                      <span class="text-[10px] text-gray-400 mt-1">{t.uploadTip}</span>
+                      <input 
+                        type="file" 
+                        multiple 
+                        accept="image/*"
+                        ref={fileInputRef}
+                        onChange={handlePhotoUpload}
+                        class="hidden"
+                      />
+                    </div>
+
+                    {photoError && (
+                      <div class="p-3 bg-red-50 border border-red-200 text-red-600 font-mono text-[10px] leading-relaxed">
+                        ⚠️ {photoError}
+                      </div>
+                    )}
+
+                    {/* Image Negatives strip layout */}
+                    {uploadedImages.length > 0 && (
+                      <div class="bg-white border border-gray-200 p-5">
+                        <div class="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
+                          <h3 class="text-[10px] font-mono uppercase tracking-widest text-gray-500">{t.selectedPhotos} ({uploadedImages.length}/9)</h3>
+                          <button 
+                            onClick={() => { setUploadedImages([]); setCurationResult(null); }}
+                            class="text-[9px] font-mono uppercase text-red-500 hover:text-red-700">
+                            [- Clear All]
+                          </button>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-3">
+                          {uploadedImages.map((img, idx) => (
+                            <div key={idx} class="relative group aspect-square border border-gray-200 overflow-hidden bg-gray-50">
+                              <img src={img.url} alt={`Negative ${idx}`} class="w-full h-full object-cover" />
+                              <span class="absolute bottom-1 left-1 bg-black text-white font-mono text-[8px] px-1 py-0.5">
+                                #{idx + 1}
+                              </span>
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setUploadedImages(prev => prev.filter((_, i) => i !== idx));
+                                }}
+                                class="absolute top-1 right-1 bg-red-600 text-white text-[8px] font-mono px-1 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                X
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div class="mt-5 flex justify-end">
+                          <button 
+                            onClick={handleRunCuration}
+                            disabled={isAnalyzingPhotos || uploadedImages.length < 2}
+                            class={`font-mono uppercase tracking-wider text-[10px] px-6 py-2.5 transition-colors ${
+                              uploadedImages.length < 2 ? 'bg-gray-100 text-gray-400 cursor-not-allowed border' : 'bg-[#2563EB] text-white hover:bg-blue-700'
+                            }`}>
+                            {isAnalyzingPhotos ? t.analyzingPhotos : t.analyzePhotosBtn}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                  </div>
+
+                  {/* Right Column: Dynamic Curation Showcase & Darkroom controller */}
+                  <div class="lg:col-span-5">
+                    {curationResult ? (
+                      <div class="space-y-6">
+                        
+                        {/* Selected Cover Banner Layout */}
+                        <div class="bg-white border-2 border-[#111827] p-6 animate-fadeIn">
+                          <div class="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
+                            <span class="text-[10px] font-mono uppercase tracking-wider text-[#2563EB] font-bold">{t.curatedShowcase}</span>
+                            <span class="text-[9px] font-mono text-gray-500 bg-gray-50 px-2 py-0.5 border border-gray-200">
+                              {t.curationIndex} #{curationResult.selectedIndex + 1}
+                            </span>
+                          </div>
+
+                          {/* Image Box with CSS Filter live-rendering */}
+                          <div class="relative overflow-hidden aspect-[3/4] border border-gray-200 mb-4 bg-gray-100">
+                            <img 
+                              src={curationResult.localBlobUrl || curationResult.base64} 
+                              alt="Master Match"
+                              style={{ filter: getFilterStyle() }}
+                              class="w-full h-full object-cover transition-all duration-300"
+                            />
+                            
+                            {/* Magazine style overlay text */}
+                            <div class="absolute inset-0 p-6 flex flex-col justify-between bg-gradient-to-t from-black/60 via-transparent to-transparent">
+                              <span class="text-white/80 font-mono text-[9px] tracking-[0.3em] uppercase">ATLAS CURATION EDITION</span>
+                              <div>
+                                <h2 class="text-white text-lg font-bold font-sans tracking-tight uppercase leading-tight">{curationResult.title}</h2>
+                                <span class="text-white/60 font-mono text-[8px] tracking-wider block mt-1">FILE: {curationResult.originalFilename}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Original vs Optimized Switcher Control */}
+                          <div class="bg-gray-50 border border-gray-200 p-3.5 flex justify-between items-center mb-6">
+                            <span class="text-[10px] font-mono uppercase text-gray-500">{t.darkroomTitle}</span>
+                            <div class="flex items-center space-x-1.5 border border-gray-200 p-0.5 bg-white">
+                              <button 
+                                onClick={() => setIsOptimized(false)}
+                                class={`text-[8px] font-mono px-2 py-1 uppercase ${!isOptimized ? 'bg-[#111827] text-white' : 'text-gray-500 hover:text-[#111827]'}`}>
+                                {t.originalLabel}
+                              </button>
+                              <button 
+                                onClick={() => setIsOptimized(true)}
+                                class={`text-[8px] font-mono px-2 py-1 uppercase ${isOptimized ? 'bg-[#2563EB] text-white' : 'text-gray-500 hover:text-[#2563EB]'}`}>
+                                {t.optimizedLabel}
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Curatorial aesthetic metrics */}
+                          <div class="space-y-3.5 mb-6">
+                            {[
+                              { label: t.scoreComposition, val: curationResult.scores?.composition },
+                              { label: t.scoreLighting, val: curationResult.scores?.lighting },
+                              { label: t.scoreColor, val: curationResult.scores?.color },
+                              { label: t.scoreVibe, val: curationResult.scores?.vibe },
+                              { label: t.scorePortrait, val: curationResult.scores?.portrait }
+                            ].map((item, idx) => (
+                              <div key={idx} class="space-y-1">
+                                <div class="flex justify-between text-[10px] font-mono">
+                                  <span class="text-gray-500 uppercase">{item.label}</span>
+                                  <span class="text-[#111827] font-bold">{item.val}/100</span>
+                                </div>
+                                <div class="w-full bg-gray-100 h-1">
+                                  <div class="bg-[#111827] h-1" style={{ width: `${item.val || 0}%` }}></div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Editor Editorial Review Critique block */}
+                          <div class="border-t border-gray-100 pt-4">
+                            <h4 class="text-[10px] font-mono uppercase tracking-widest text-gray-400 mb-2">{t.editorReview}</h4>
+                            <p class="text-xs text-gray-600 leading-relaxed italic">
+                              "{curationResult.review}"
+                            </p>
+                          </div>
+
+                          {/* Export HD optimized copy */}
+                          <button 
+                            onClick={handleDownloadOptimized}
+                            class="w-full mt-6 bg-[#111827] text-white text-[10px] font-mono uppercase tracking-wider py-3 hover:bg-gray-800 transition-colors flex items-center justify-center space-x-1.5">
+                            <span>{t.downloadBtn}</span>
+                          </button>
+
+                        </div>
+
+                      </div>
+                    ) : (
+                      <div class="h-full min-h-[350px] border border-dashed border-gray-200 flex flex-col justify-center items-center text-center p-6 bg-gray-50">
+                        <svg class="w-6 h-6 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                        </svg>
+                        <span class="text-[9px] font-mono text-gray-400 uppercase tracking-widest font-bold">{t.awaitingPrompt}</span>
+                        <p class="text-[10px] text-gray-400 max-w-xs mt-1.5 leading-relaxed">{t.awaitingPromptDesc}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* API settings popup module */}
             {showSettings && (
               <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                 <div class="bg-white border-2 border-black w-full max-w-md p-6 animate-fadeIn">
@@ -975,22 +1388,15 @@ Rules:
                       <h2 class="text-sm font-bold text-[#111827] font-mono uppercase tracking-wide">{t.settingsTitle}</h2>
                       <p class="text-[10px] text-gray-400 mt-0.5">{t.settingsSub}</p>
                     </div>
-                    <button 
-                      onClick={() => setShowSettings(false)}
-                      class="text-gray-400 hover:text-black text-sm font-mono p-1">
-                      [X]
-                    </button>
+                    <button onClick={() => setShowSettings(false)} class="text-gray-400 hover:text-black text-sm font-mono p-1">[X]</button>
                   </div>
 
                   <form onSubmit={handleSaveSettings} class="space-y-4">
                     <div>
                       <label class="block text-[9px] font-mono uppercase tracking-wider text-gray-500 mb-1">{t.baseUrlLabel}</label>
                       <input 
-                        type="url" 
-                        required
-                        value={apiBaseUrl}
-                        onChange={(e) => setApiBaseUrl(e.target.value)}
-                        placeholder="https://api.deepseek.com/v1"
+                        type="url" required value={apiBaseUrl} onChange={(e) => setApiBaseUrl(e.target.value)}
+                        placeholder="https://openrouter.ai/api/v1"
                         class="w-full text-xs border border-gray-200 px-3 py-2 bg-gray-50 focus:border-[#2563EB] focus:bg-white font-mono"
                       />
                     </div>
@@ -998,10 +1404,7 @@ Rules:
                     <div>
                       <label class="block text-[9px] font-mono uppercase tracking-wider text-gray-500 mb-1">{t.keyLabel}</label>
                       <input 
-                        type="password" 
-                        required
-                        value={apiKey}
-                        onChange={(e) => setApiKey(e.target.value)}
+                        type="password" required value={apiKey} onChange={(e) => setApiKey(e.target.value)}
                         placeholder="sk-........................"
                         class="w-full text-xs border border-gray-200 px-3 py-2 bg-gray-50 focus:border-[#2563EB] focus:bg-white font-mono"
                       />
@@ -1010,61 +1413,39 @@ Rules:
                     <div>
                       <label class="block text-[9px] font-mono uppercase tracking-wider text-gray-500 mb-1">{t.modelLabel}</label>
                       <input 
-                        type="text" 
-                        required
-                        value={apiModel}
-                        onChange={(e) => setApiModel(e.target.value)}
-                        placeholder="deepseek-chat"
+                        type="text" required value={apiModel} onChange={(e) => setApiModel(e.target.value)}
+                        placeholder="openrouter/free"
                         class="w-full text-xs border border-gray-200 px-3 py-2 bg-gray-50 focus:border-[#2563EB] focus:bg-white font-mono"
                       />
                     </div>
 
-                    {/* Quick selection templates */}
                     <div class="pt-2 border-t border-gray-100">
                       <span class="block text-[8px] font-mono text-gray-400 uppercase tracking-widest mb-2">Preset Gateways</span>
                       <div class="flex gap-2">
                         <button 
                           type="button"
-                          onClick={() => {
-                            setApiBaseUrl('https://api.deepseek.com/v1');
-                            setApiModel('deepseek-chat');
-                          }}
+                          onClick={() => { setApiBaseUrl('https://openrouter.ai/api/v1'); setApiModel('google/gemini-2.5-flash'); }}
                           class="text-[9px] font-mono border border-gray-200 px-2.5 py-1 hover:bg-gray-50 transition-colors">
-                          DeepSeek
+                          Gemini 2.5
                         </button>
                         <button 
                           type="button"
-                          onClick={() => {
-                            setApiBaseUrl('https://api.openai.com/v1');
-                            setApiModel('gpt-4o-mini');
-                          }}
+                          onClick={() => { setApiBaseUrl('https://openrouter.ai/api/v1'); setApiModel('meta-llama/llama-3.2-11b-vision-instruct'); }}
                           class="text-[9px] font-mono border border-gray-200 px-2.5 py-1 hover:bg-gray-50 transition-colors">
-                          OpenAI (mini)
+                          Llama 3.2 Vision
                         </button>
                         <button 
                           type="button"
-                          onClick={() => {
-                            setApiBaseUrl('http://localhost:11434/v1');
-                            setApiModel('qwen2.5');
-                          }}
+                          onClick={() => { setApiBaseUrl('https://openrouter.ai/api/v1'); setApiModel('openrouter/free'); }}
                           class="text-[9px] font-mono border border-gray-200 px-2.5 py-1 hover:bg-gray-50 transition-colors">
-                          Local Ollama
+                          Free Auto-Router
                         </button>
                       </div>
                     </div>
 
                     <div class="flex justify-end pt-4 border-t border-gray-100 space-x-2">
-                      <button 
-                        type="button" 
-                        onClick={() => setShowSettings(false)}
-                        class="text-[9px] font-mono uppercase px-3 py-2 text-gray-400 hover:text-gray-900">
-                        {t.cancel}
-                      </button>
-                      <button 
-                        type="submit" 
-                        class="bg-[#2563EB] text-white text-[9px] font-mono uppercase px-4 py-2 hover:bg-blue-700 transition-colors">
-                        {t.saveBtn}
-                      </button>
+                      <button type="button" onClick={() => setShowSettings(false)} class="text-[9px] font-mono uppercase px-3 py-2 text-gray-400 hover:text-gray-900">{t.cancel}</button>
+                      <button type="submit" class="bg-[#2563EB] text-white text-[9px] font-mono uppercase px-4 py-2 hover:bg-blue-700 transition-colors">{t.saveBtn}</button>
                     </div>
                   </form>
                 </div>
